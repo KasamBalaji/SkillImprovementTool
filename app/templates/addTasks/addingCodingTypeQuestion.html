@@ -1,0 +1,136 @@
+{% extends "addTasks/base.html" %}
+
+{% block headblock %}
+<script type="text/javascript" lang="JavaScript">
+	$(document).ready(function () {
+		// $("#add-testcase-button").on("click", (function () {
+		// 	console.log("clicked");
+		// 	var $clone = $(".testcase").first().clone();
+		// 	$clone.append("<button type='button' class='remove-testcase'>remove above testcase</button><br>");
+		// 	$clone.insertBefore(".add-testcase");
+		// }));
+
+		// $(".test-cases").on("click", ".remove-testcase", function () {
+		// 	$(this).parent().remove();
+		// });
+
+		$("#answer").on("click", (function () {
+			var anySelected = true;
+			console.log("answer selected");
+			console.log($("#language").val());
+			if ($("#language").val() == null) {
+				anySelected = false;
+			}
+			if (!anySelected) {
+				alert("You must select an option from at least one dropdown");
+				return false;
+			}
+		}));
+	});
+</script>
+
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+	Adding Coding type Questions
+</title>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='CSS/addingQuestions.css') }}">	
+{% endblock %}
+
+{% block bodyblock %}
+
+<h1>Adding Coding Type Questions</h1>
+
+<!-- Create Form -->
+<form id="form" class="addingtestcasetypeqn" method="post" enctype="multipart/form-data">
+
+	<div class="form-control">
+		<label for="name" id="label-name">
+			Title*
+		</label>
+
+		<input type="text" name="title" id="title" placeholder="Enter question title" required />
+	</div>
+
+
+	<div class="form-control">
+		<label for="description">
+			Description*
+		</label>
+
+		<textarea name="description" id="description" placeholder="Enter question description here"></textarea>
+	</div>
+
+	<div class="form-control">
+		<label for="instructions">
+			Instructions
+		</label>
+
+		<textarea name="instructions" id="instructions" placeholder="Enter Instructions if any are present"></textarea>
+	</div>
+
+
+	<div class="form-control">
+		<label for="constraints" id="label-name">
+			Constraints
+		</label>
+
+		<input type="text" name="constraints" placeholder="Enter constrains if any are present" id="constraints" />
+	</div>
+
+
+	<div class="form-control">
+		<label for="examples">
+			Examples*
+		</label>
+		<textarea name="examples" id="examples" style="white-space: pre-wrap;"
+			placeholder="Enter examples cases"></textarea>
+	</div>
+
+	<div class="form-control">
+		<label for="answer">
+			Your Solution*
+		</label>
+		<select name="solutionlanguage" id="language" style="width: 10em;">
+			<option selected disabled value="">---</option>
+			<option value="C++">C++</option>
+			<option value="Java">Java</option>
+			<option value="Python">Python</option>
+		</select>
+		<br>
+		<textarea name="answer" id="answer" placeholder="Enter your solution here" required></textarea>
+	</div>
+
+	<div class="form-control">
+		<label for="referencelinks">
+			Reference Links*
+		</label>
+
+		<textarea name="referencelinks" id="referencelinks"
+			placeholder="Enter reference links seperated by ||. example : link1 || link2 || ..."></textarea>
+	</div>
+	<div class="form-control">
+		<div class="test-cases">
+			<label for="comment">
+				TestCases*
+			</label>
+			<div class="testcase" id="testcase" style="padding: 0em 5em 0em 5em;">
+				<label for="input">input</label>
+				<!-- <textarea name="input" id="input" placeholder="Enter your input for testcase" required></textarea> -->
+				<input type="file" name="input" required>
+				<label for="output">output</label>
+				<!-- <textarea name="output" id="output" placeholder="Enter your output for testcase" required></textarea> -->
+				<input type="file" name="output" required>
+			</div>
+			<br>
+			<!-- <button type="button" id="add-testcase-button" class="add-testcase">Add TestCase</button> -->
+		</div>
+	</div>
+
+	<button type="submit" value="submit">
+		Submit
+	</button>
+</form>
+
+{% endblock %}

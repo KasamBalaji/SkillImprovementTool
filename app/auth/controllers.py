@@ -1,4 +1,4 @@
-from flask import Blueprint,render_template
+from flask import Blueprint, render_template
 from flask import render_template, redirect, request, url_for, flash
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db
@@ -6,7 +6,7 @@ from app.auth.models import User
 
 from app.auth.forms import LoginForm, RegistrationForm
 
-auth = Blueprint('auth',__name__)
+auth = Blueprint('auth', __name__)
 
 
 @auth.route('/login', methods=['GET', 'POST'])
