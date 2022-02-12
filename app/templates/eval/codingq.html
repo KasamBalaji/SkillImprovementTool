@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Coding Question{% endblock %}
+
+{% block page_content %}
+
+
+<style type="text/css" media="screen">
+    #editor { 
+        width: 800px;
+        height: 400px;
+        border: 1px solid blue; 
+    }
+</style>
+<h1>{{qno}}</h1>
+<div id="editor">function foo(items) {
+    var x = "All this is syntax highlighted";
+    return x;
+}</div>
+
+<div id="testcases"></div>
+<button type="button" onclick="testSol()">Test</button>
+<button type="button" onclick="submitSol()">Submit</button>
+
+<script src="https://pagecdn.io/lib/ace/1.4.13/ace.js" crossorigin="anonymous" integrity="sha256-bS3VAQePcKYmsvI+8BdG2QJAVb9FbiZLgM5vK2/+TcM=" ></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+<script>
+    var editor = ace.edit("editor");
+    editor.setTheme("ace/theme/monokai");
+    editor.session.setMode("ace/mode/javascript");
+
+    function testSol(){
+        var server_data = editor.getValue();
+            $.ajax({
+        type: "POST",
+        url: "{{url_for('eval.testcases')}}",
+        data: JSON.stringify(server_data),
+        contentType: "application/json",
+        dataType: 'json',
+        success: function(result) {
+            document.getElementById("testcases").innerHTML = result.rows; 
+        } 
+        });
+    };
+    function submitSol(){
+        var server_data = editor.getValue();
+            $.ajax({
+        type: "POST",
+        url: "{{url_for('eval.test')}}",
+        data: JSON.stringify(server_data),
+        contentType: "application/json",
+        dataType: 'json',
+        success: function(result) {
+           console.log("Redirected")
+        } 
+        });
+        var redirect = "{{url_for('eval.test')}}";
+        $.redirectPost(redirect, {qno:"{{qno}}"});
+    };
+
+    // jquery extend function
+    $.extend(
+    {
+        redirectPost: function(location, args)
+        {
+            var form = '';
+            $.each( args, function( key, value ) {
+                value = value.split('"').join('\"')
+                form += '<input type="hidden" name="'+key+'" value="'+value+'">';
+            });
+            $('<form action="' + location + '" method="POST">' + form + '</form>').appendTo($(document.body)).submit();
+        }
+    });
+</script>
+{% endblock %}
