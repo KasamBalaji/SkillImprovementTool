@@ -1,8 +1,6 @@
 from flask import Blueprint,request,redirect,url_for,flash,render_template,jsonify,session
 from flask.views import View
-from flask_login import login_required
-import jsonify
-
+from flask_login import login_required 
 eval = Blueprint('eval',__name__)
 
 class Problem(View):
