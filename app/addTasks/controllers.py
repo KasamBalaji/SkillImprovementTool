@@ -35,10 +35,15 @@ def addingFillInTheBlanks():
         content = tasks["content"] 
         relatedtags = tasks["relatedtags"]
         answer = tasks["answer"] 
-        links = tasks["links"]
-        print(tasks["c++"])
-        print(tasks["JAVA"])
+        links = tasks["links"] 
+        skills =""
+        skill_list=['C++','JAVA','PYTHON','OOPS','HTML','CSS','JAVASCRIPT','APPTITUDE','CODING']
+        for skill in skill_list:
+            if request.form.get(skill):
+                skills=skills+skill+"||" 
+        skills = skills[:-2]
         task_content = jsonify(
+            skills=skills,
             content=content, 
             relatedtags=relatedtags,
             answer=answer,
@@ -51,10 +56,10 @@ def addingFillInTheBlanks():
                 "answer" : answer,
                 "referencelinks" : links,
         },
-                    skills=options,
+                    skills=skills,
                     tags=relatedtags,
-                    q_code='qc3',
-                    e_code='ec3')
+                    q_code='qc4',
+                    e_code='ec4')
         db.session.add(task)
         db.session.commit()
         return render_template('addTasks/index.html', tasks=tasks)
@@ -71,7 +76,13 @@ def addingMUltipleChoiceQuestion():
         relatedtags = tasks["relatedtags"]
         answer = tasks["answer"] 
         links = tasks["links"]
-         
+        skills =""
+        skill_list=['C++','JAVA','PYTHON','OOPS','HTML','CSS','JAVASCRIPT','APPTITUDE','CODING']
+        for skill in skill_list:
+            if request.form.get(skill):
+                skills=skills+skill+"||" 
+        skills = skills[:-2]
+
         task_content = jsonify(
             content=content,
             options=options,
@@ -87,7 +98,7 @@ def addingMUltipleChoiceQuestion():
                 "answer" : answer,
                 "referencelinks" : links,
         },
-                    skills=options,
+                    skills=skills,
                     tags=relatedtags,
                     q_code='qc3',
                     e_code='ec3')
@@ -110,22 +121,31 @@ def addingCodingQuestion():
         examples = tasks["examples"]
         solutionlanguage = tasks["solutionlanguage"]
         answer = tasks["answer"]
-        links = tasks["referencelinks"].split("||")
-        # inputfile = request.files["input"]
-        # outputfile = request.files["output"]
+        links = tasks["referencelinks"]
+        relatedtags = tasks["relatedtags"] 
+        testCaseInput= tasks["input"]
+        testCaseOutput =  tasks["output"]   
 
-        task_content = jsonify(
-            title=title,
-            description=description,
-            instructions=instructions,
-            constraints=constraints,
-            examples=examples,
-            solutionlanguage=solutionlanguage,
-            answer=answer,
-            links=links,
-        )
-        print(task_content.data)
-        
+        task = Task(task_content={
+                "title" : title,
+                "description" : description, 
+                "instructions" : instructions,
+                "constraints" : constraints,
+                "examples" : examples,
+                "solutionlanguage" : solutionlanguage,
+                "answer" : answer,
+                "referencelinks" : links,
+                "testcasesinput" : [testCaseInput],
+                "testcasesoutput" : [testCaseOutput]
+        },
+                    skills="coding",
+                    tags=relatedtags,
+                    q_code='qc1',
+                    e_code='ec1')
+        print(testCaseInput)
+        print(testCaseOutput) 
+        db.session.add(task)
+        db.session.commit()
         return render_template('addTasks/index.html', tasks=tasks)
     else:
         return render_template('addTasks/addingCodingTypeQuestion.html')

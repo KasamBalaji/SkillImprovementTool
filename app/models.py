@@ -39,10 +39,9 @@ class Skill(db.Model):
 
 class UserSkill(db.Model):
     __tablename__='user_skills'
-    id = db.Column(db.Integer, primary_key=True)
-    skill_id= db.Column(db.Integer(), db.ForeignKey('skills.id'))
+    id = db.Column(db.Integer, primary_key=True) 
     user_id= db.Column(db.Integer(), db.ForeignKey('users.id'))
-    value= db.Column(db.Float(),nullable=False)
+    skill_values = db.Column(JSON, nullable=false)
 
 class Task(db.Model):
     __tablename__='tasks'
@@ -57,8 +56,7 @@ class TaskSkill(db.Model):
     __tablename__='task_skills'
     id = db.Column(db.Integer, primary_key=True)
     task_id = db.Column(db.Integer(), db.ForeignKey('users.id'))
-    user_id = db.Column(db.Integer(), db.ForeignKey('users.id'))
-    value = db.Column(db.Float(),nullable=False)
+    skill_values = db.Column(JSON, nullable=false)
 
 class Submissions(db.Model):
     __tablename__='submissions'
@@ -72,7 +70,7 @@ class TaskSkillUpdate(db.Model):
     __tablename__='task_skill_updates'
     id = db.Column(db.Integer, primary_key=True)
     time_stamp = db.Column(db.DateTime, server_default=db.func.now())
-    submission_id = db.Column(db.Integer(), db.ForeignKey('submissions.id'))
+    submission_id = db.Column(db.Integer, db.ForeignKey('submissions.id'))
     updatedskillvalue = db.Column(JSON, nullable=False)
 
 class UserSkillUpdate(db.Model):
@@ -82,7 +80,15 @@ class UserSkillUpdate(db.Model):
     submission_id = db.Column(db.Integer(), db.ForeignKey('submissions.id'))
     updatedskillvalue = db.Column(JSON, nullable=False)
 
-
+class Batches(db.Model):
+    __tablename__='batches'
+    id = db.Column(db.Integer, primary_key=True)
+    batch_number = db.Column(db.Integer,nullable= False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    submission_id = db.Column(db.Integer, db.ForeignKey('submissions.id'))
+    quality= db.Column(db.Float)
+    time = db.Column(db.Float)
+    skills = db.Column(JSON, nullable=False)
 
 
 

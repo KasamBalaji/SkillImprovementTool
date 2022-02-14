@@ -79,6 +79,13 @@
 		<input type="text" name="constraints" placeholder="Enter constrains if any are present" id="constraints" />
 	</div>
 
+	<div class="form-control">
+		<label for="relatedtags" id="label-name">
+			Related Tags*
+		</label>
+		<input type="text" name="relatedtags" id="relatedtags"
+			placeholder="Enter relatedtags seperated by || tag1 || tag2 || ..." required />
+	</div>
 
 	<div class="form-control">
 		<label for="examples">
@@ -117,11 +124,11 @@
 			</label>
 			<div class="testcase" id="testcase" style="padding: 0em 5em 0em 5em;">
 				<label for="input">input</label>
-				<!-- <textarea name="input" id="input" placeholder="Enter your input for testcase" required></textarea> -->
-				<input type="file" name="input" required>
+				<textarea name="input" id="input" placeholder="Enter your input for testcase" required></textarea>
+				<!-- <input type="file" name="input" required> -->
 				<label for="output">output</label>
-				<!-- <textarea name="output" id="output" placeholder="Enter your output for testcase" required></textarea> -->
-				<input type="file" name="output" required>
+				<textarea name="output" id="output" placeholder="Enter your output for testcase" required></textarea>
+				<!-- <input type="file" name="output" required> -->
 			</div>
 			<br>
 			<!-- <button type="button" id="add-testcase-button" class="add-testcase">Add TestCase</button> -->
