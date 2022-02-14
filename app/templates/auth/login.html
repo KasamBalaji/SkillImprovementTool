@@ -1,15 +1,36 @@
 {% extends "base.html" %}
 {% import "bootstrap/wtf.html" as wtf %}
-
 {% block title %}Flasky - Login{% endblock %}
-
 {% block page_content %}
+<style>
+    .page-header{
+        font-family: cursive;
+        /* background-image: url('http://www.cartoondistrict.com/wp-content/uploads/2018/03/Different-Shades-of-Grey-Color-Names00001.jpg'); */
+     background-color:#212326 ;
+        text-align: center;
+       min-height: 3px;
+       color:white;
+    padding-top: 1px;
+    }
+    .col-md-4{
+        /* background-image: url('https://www.schemecolor.com/wallpaper?i=10300&desktop'); */
+        background-color: grey;
+        padding-bottom: 10px;
+     color: black;
+     padding-top: 10px;
+     /* padding-bottom: 10px; */
+     /* padding-left: 100px; */
+     /* text-align: center; */
+    }
+</style>
+
 <div class="page-header">
-    <h1>Login</h1>
+    <h3>Have an account ?
+    </h3>
 </div>
 <div class="col-md-4">
     {{ wtf.quick_form(form) }}
     <br>
-    <p>New user? <a href="{{ url_for('auth.register') }}">Click here to register</a>.</p>
+    <p>New user? <a  href="{{ url_for('auth.register') }}">Click here to register</a>.</p>
 </div>
 {% endblock %}
