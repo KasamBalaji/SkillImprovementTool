@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-
+{% import "bootstrap/wtf.html" as wtf %}
 {% block title %}Flasky{% endblock %}
 
 {% block page_content %}
@@ -48,6 +48,10 @@
             A free, active, social, personalised educational tool
 Enhance your students’ learning by providing personalised study pathways 
 </div>
+<div>
+    {{ wtf.quick_form(form) }}
+</div>
+
 <div class="parallax"></div>
 
 <div class="second">

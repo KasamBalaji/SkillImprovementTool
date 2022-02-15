@@ -3,10 +3,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 from app import db, login_manager   
 from sqlalchemy.dialects.postgresql import JSON
-<<<<<<< HEAD
 from flask import session
-=======
->>>>>>> origin/newbranch1
 
 
 class User(UserMixin, db.Model):
@@ -15,10 +12,7 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(64), unique=True, index=True)
     username = db.Column(db.String(64), unique=True, index=True)
     password_hash = db.Column(db.String(128))
-<<<<<<< HEAD
     batches_completed = db.Column(db.Integer)
-=======
->>>>>>> origin/newbranch1
 
     @property
     def password(self):
