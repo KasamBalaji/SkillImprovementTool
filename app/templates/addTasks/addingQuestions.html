@@ -1,0 +1,13 @@
+{% extends "base.html"%}
+{% block page_content %}
+ 
+
+    <h1>Hey there please select which type of question you want to add</h1>
+
+    <a href="{{ url_for('addTasks.addingFillInTheBlanks') }}"> FILL IN THE BLANKS </a>
+    <br>
+    <a href="{{ url_for('addTasks.addingMUltipleChoiceQuestion') }}"> Multiple Choice Qns </a>
+    <br>
+    <a href="{{ url_for('addTasks.addingCodingQuestion') }}">  Coding Type Questions </a>
+
+{% endblock %}

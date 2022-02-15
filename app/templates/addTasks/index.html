@@ -1,0 +1,16 @@
+{% extends "base.html"%}
+{% block page_content %}
+
+<h1>index page</h1>
+<a href="{{ url_for('addTasks.addQuestions') }}"> Add Questions</a>
+
+<br> 
+<br><br>
+question details: {{tasks.len}}
+{% for content,value in tasks.items() %}
+{{content}}: {{value}}
+<br><br>
+{% endfor %} 
+
+
+{% endblock %}
