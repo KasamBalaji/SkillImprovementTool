@@ -4,7 +4,8 @@ from flask_login import login_required
 from app.models import TaskSkill,Task
 from app import db
 from sqlalchemy import text
-from app.eval.codechecker import codechecker
+from app.eval.codechecker import codechecker,STATUS_CODES
+import os
 eval = Blueprint('eval',__name__)
 
 
@@ -42,6 +43,7 @@ class Problem(View):
             elif skills is not None:
                 session["qno"]=1
                 session["task_ids"] = self.get_task_ids(skills)
+                session["skills"]=skills
                 print(session["task_ids"])
             else:
                 flash("There is no previous session and Can't Start new session without any Skills")
@@ -50,6 +52,8 @@ class Problem(View):
             curr_q = session["qno"]
             task_id =session["task_ids"][curr_q-1]
             task = Task.query.filter_by(id=4).first()
+            session["task_skills"]=task.skills.lower().split('||')
+            session["task_e_code"]=task.e_code
             print(task)
             qc=task.q_code
             print("qc is ",qc)
@@ -57,7 +61,11 @@ class Problem(View):
                 content_labels= ["title","description","instructions","constraints","examples","referencelinks"] 
                 session["task_data"]=task.task_content
                 task_data = {key:task.task_content[key] for key in content_labels}
-                return render_template('eval/CQ.html',task_data =task_data)
+                languages=[]
+                if 'coding' in session["task_skills"]:
+                    temp = ['python','java','cpp','c']
+                    languages = [lang  for lang in temp if lang in session["skills"]]
+                return render_template('eval/CQ.html',task_data =task_data,qno=session["qno"],languages=languages)
 
 
             return render_template('404.html')
@@ -80,16 +88,23 @@ def testcases():
         print(code)
         #Creating Code File
         ext ="py"
-        filename = "code."+ext
+        filename = "usercode."+ext
         create_file(filename,code)
-
-        inputs=["1"]
-        outputs=["2"]
-
+        # inputs = session["task_data"]["testcasesinput"]
+        # outputs = session["task_data"]["testcasesoutput"]
+        inputs = ["1","2"]
+        outputs = ["2","3"]
+        cnt =0
         for input,output in zip(inputs,outputs):
             create_file("input.txt",input)
-            create_file("output.txt",output)
-        codechecker(filename, inputfile="input.txt", expectedoutput="output.txt", timeout=1, check=True)
-        results = {'rows': "Testcases got solved"}
+            create_file("eoutput.txt",output+"\n")
+            code,result =codechecker(filename, inputfile="input.txt", expectedoutput="eoutput.txt", timeout=1, check=True)
+            if code==201:
+                cnt +=1
+            os.remove("input.txt")
+            os.remove("output.txt")
+            os.remove("eoutput.txt")
+            
+        results = {'rows': f"{cnt}/{len(inputs)} Testcases got solved"}
         return results
 
