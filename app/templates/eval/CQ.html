@@ -3,7 +3,14 @@
 
 {% block page_content %}
 
-<h1>{{qno}}</h1>
+<h1>{{task_data["title"]}}</h1>
+<h4>{{task_data["description"]}}</h2>
+<br>
+<h2>Instructions</h2>
+<h4>{{task_data["instructions"]}}</h2>
+<br>
+<a href="{{task_data['referencelinks']}}">{{task_data["reference_links"]}}</a>
+<br>
 <div id="editor">function foo(items) {
     var x = "All this is syntax highlighted";
     return x;}</div>
@@ -43,10 +50,25 @@
 
 <!-- Scripts -->
 <script src="https://pagecdn.io/lib/ace/1.4.13/ace.js" crossorigin="anonymous" integrity="sha256-bS3VAQePcKYmsvI+8BdG2QJAVb9FbiZLgM5vK2/+TcM=" ></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+$.extend(
+    {
+        redirectPost: function(location, args)
+        {
+            var form = '';
+            $.each( args, function( key, value ) {
+                value = value.split('"').join('\"')
+                form += '<input type="hidden" name="'+key+'" value="'+value+'">';
+            });
+            $('<form action="' + location + '" method="POST">' + form + '</form>').appendTo($(document.body)).submit();
+        }
+    });
+</script>
 <script>
     var editor = ace.edit("editor");
     editor.setTheme("ace/theme/monokai");
-    editor.session.setMode("ace/mode/javascript");
+    editor.session.setMode("ace/mode/python");
 
     function testSol(){
         var server_data = editor.getValue();
