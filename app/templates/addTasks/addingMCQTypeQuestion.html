@@ -1,0 +1,134 @@
+{% extends "addTasks/base.html" %}
+
+{% block headblock %}
+
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+	Adding Multiple Choice type Questions
+</title>
+
+
+<link rel="stylesheet" href="{{ url_for('static', filename='CSS/addingQuestions.css') }}">
+
+<script type="text/javascript" lang="JavaScript">
+	$(document).ready(function () {
+		$("#add-testcase-button").on("click", (function () {
+			console.log("clicked");
+			var $clone = $(".testcase").first().clone();
+			$clone.append("<button type='button' class='remove-testcase'>-</button>");
+			$clone.insertBefore(".add-testcase");
+		}));
+
+		$(".test-cases").on("click", ".remove-testcase", function () {
+			$(this).parent().remove();
+		});
+
+
+		//have to select atleast one checkbox
+		$('#submit').on("click", (function () {
+			var atLeastOneIsChecked = false;
+			console.log("Content Clicked");
+			$('input:checkbox').each(function () {
+				if ($(this).is(':checked')) {
+					atLeastOneIsChecked = true;
+					// Stop .each from processing any more items
+					return true;
+				}
+			});
+			if (!atLeastOneIsChecked) {
+				// Do something with atLeastOneIsChecked
+				alert("have to select atleast one skill");
+				return false;
+			}
+		}));
+	});
+</script>
+
+{% endblock %}
+
+{% block bodyblock %}
+
+<h1>Adding Multiple Choice type Questions</h1>
+
+<!-- Create Form -->
+<form id="form" method="post">
+
+	<div class="form-control">
+		<label>Select All the Skills required to solve the question
+			<small>(Check all that apply)</small>
+		</label>
+		<!-- Input Type Checkbox -->
+		<label for="inp-1">
+			<input type="checkbox" name="C++">C++</input></label>
+		<label for="inp-2">
+			<input type="checkbox" name="JAVA">JAVA</input></label>
+		<label for="inp-3">
+			<input type="checkbox" name="PYHTON">PYHTON</input></label>
+		<label for="inp-4">
+			<input type="checkbox" name="OOPS">OOPS</input></label>
+		<label for="inp-5">
+			<input type="checkbox" name="HTML">HTML</input></label>
+		<label for="inp-6">
+			<input type="checkbox" name="CSS">CSS</input></label>
+		<label for="inp-7">
+			<input type="checkbox" name="JAVASCRIPT">JAVASCRIPT</input></label>
+		<label for="inp-9">
+			<input type="checkbox" name="APPTITUDE">APPTITUDE</input></label>
+		<label for="inp-10">
+			<input type="checkbox" name="CODING">CODING</input></label>
+	</div>
+
+	<div class="form-control">
+		<label for="content">
+			Task Content*
+		</label>
+		<textarea name="content" id="content" placeholder="Enter Task content here" required></textarea>
+	</div>
+
+	<div class="form-control">
+		<label for="options">
+			Options*
+		</label>
+
+		<textarea name="options" id="options" placeholder="Enter options seperated by || like option a||option b|| ..."
+			required></textarea>
+	</div>
+
+
+	<div class="form-control">
+		<label for="relatedtags" id="label-name">
+			Related Tags*
+		</label>
+		<input type="text" name="relatedtags" id="relatedtags"
+			placeholder="Enter relatedtags seperated by || tag1 || tag2 || ..." required />
+	</div>
+
+
+	<div class="form-control">
+		<label for="answer">
+			Answer*
+		</label>
+
+		<input type="text" name="answer" id="answer"
+			placeholder="Enter answer seperated by || like option a||option b|| ..." required />
+	</div>
+
+
+	<div class="form-control">
+		<label for="links">
+			Reference Links*
+		</label>
+
+		<textarea name="links" id="links"
+			placeholder="Enter reference links seperated by ||. example : link1 || link2 || ..." required></textarea>
+	</div>
+
+
+
+	<button type="submit" id="submit" value="submit">
+		Submit
+	</button>
+</form>
+
+{% endblock %} 

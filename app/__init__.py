@@ -13,6 +13,11 @@ login_manager = LoginManager(app)
 login_manager.login_view = 'auth.login'
 
 from app.auth.controllers import auth
+from app.eval.controllers import eval
+from app.addTasks.controllers import addTasks
 app.register_blueprint(auth,url_prefix='/auth')
+app.register_blueprint(eval,url_prefix='')
+app.register_blueprint(addTasks, url_prefix='/addTasks')
+
 
 
