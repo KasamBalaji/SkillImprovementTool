@@ -2,7 +2,7 @@ from flask import Blueprint,render_template
 from flask import render_template, redirect, request, url_for, flash
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db
-from app.auth.models import User
+from app.models import User
 
 from app.auth.forms import LoginForm, RegistrationForm
 
@@ -38,7 +38,7 @@ def register():
     if form.validate_on_submit():
         user = User(email=form.email.data.lower(),
                     username=form.username.data,
-                    password=form.password.data)
+                    password=form.password.data,batches_completed=0)
         db.session.add(user)
         db.session.commit()
         flash('You can now login.')

@@ -4,7 +4,7 @@ DEBUG = True
 # Define the application directory
 import os
 BASE_DIR = os.path.abspath(os.path.dirname(__file__)) 
-
+SQLALCHEMY_DATABASE_URI = 'postgresql://iwypzckv:oQ_hgRObKtIL9ygc7p2n5LN7EbIZRYCp@abul.db.elephantsql.com:5432/iwypzckv'
 
 
 # Application threads. A common general assumption is
