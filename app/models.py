@@ -89,6 +89,7 @@ class Batches(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     batch_number = db.Column(db.Integer,nullable= False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    # task_id = db.Columnt(db.Integer,db.ForeignKey('tasks.id'))
     submission_id = db.Column(db.Integer, db.ForeignKey('submissions.id'))
     quality= db.Column(db.Float)
     time = db.Column(db.Float)

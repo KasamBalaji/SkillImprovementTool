@@ -1,0 +1,56 @@
+{% extends "eval/base_type.html" %}
+{% block title %}MCQ{% endblock %}
+
+{% block page_content %}
+
+{{task_data["content"]}}
+
+{{wtf.quick_form(form)}}
+
+<a href="#" role="button" id="btnSubmit">Submit</a>
+<a href='{{task_data["referencelinks"]}}'>{{task_data["referencelinks"]}}</a>
+<div id="error"></div>
+
+<!-- Scripts -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+    $.extend(
+        {
+            redirectPost: function(location, args)
+            {
+                var form = '';
+                $.each( args, function( key, value ) {
+                    value = value.split('"').join('\"')
+                    form += '<input type="hidden" name="'+key+'" value="'+value+'">';
+                });
+                $('<form action="' + location + '" method="GET">' + form + '</form>').appendTo($(document.body)).submit();
+            }
+        });
+    </script>
+<script>
+    document.getElementById("btnSubmit").addEventListener("click",function(event){
+        event.preventDefault();
+    try{
+        var value =document.querySelector('input[name="options"]:checked').value;
+    }
+    catch (err){document.getElementById("error").innerHTML= "Options can't be None";   return false; };
+   
+    var server_data ={answer: value,qno:"{{qno}}",type:"task"};
+    console.log(server_data);
+        $.ajax({
+    type: "POST",
+    url: "{{url_for('eval.submit')}}",
+    data: JSON.stringify(server_data),
+    contentType: "application/json",
+    dataType: 'json',
+    success: function(result) {
+       console.log("Redirected")
+    } 
+    });
+    var redirect = "{{url_for('eval.test')}}";
+    $.redirectPost(redirect, {qno:"{{qno}}"});
+    return false;
+});
+</script>
+
+{% endblock %}

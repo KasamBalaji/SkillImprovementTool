@@ -61,7 +61,7 @@ $.extend(
                 value = value.split('"').join('\"')
                 form += '<input type="hidden" name="'+key+'" value="'+value+'">';
             });
-            $('<form action="' + location + '" method="POST">' + form + '</form>').appendTo($(document.body)).submit();
+            $('<form action="' + location + '" method="GET">' + form + '</form>').appendTo($(document.body)).submit();
         }
     });
 </script>
@@ -71,10 +71,10 @@ $.extend(
     editor.session.setMode("ace/mode/python");
 
     function testSol(){
-        var server_data = editor.getValue();
+        var server_data ={code: editor.getValue(),qno:"{{qno}}",type:"test"};
             $.ajax({
         type: "POST",
-        url: "{{url_for('eval.testcases')}}",
+        url: "{{url_for('eval.submit')}}",
         data: JSON.stringify(server_data),
         contentType: "application/json",
         dataType: 'json',
@@ -84,10 +84,10 @@ $.extend(
         });
     };
     function submitSol(){
-        var server_data = editor.getValue();
+        var server_data ={code: editor.getValue(),qno:"{{qno}}",type:"task"};
             $.ajax({
         type: "POST",
-        url: "{{url_for('eval.test')}}",
+        url: "{{url_for('eval.submit')}}",
         data: JSON.stringify(server_data),
         contentType: "application/json",
         dataType: 'json',
