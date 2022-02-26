@@ -7,48 +7,103 @@ from sqlalchemy import text
 from sqlalchemy.sql import func
 from app.eval.codechecker import codechecker,STATUS_CODES
 from app.eval.forms import MCQForm
-import os,random
+import os,random,itertools
 eval = Blueprint('eval',__name__)
 
 
-
+sqls ={
+    "OB_PF": "SELECT avg(quality) ,avg(time) ,avg(CAST(skill_gaps->>'{skill}' AS INTEGER)) FROM batches \
+WHERE batch_number= (SELECT batch_number FROM batches WHERE user_id={user_id} ORDER BY batch_number DESC LIMIT 1) \
+AND skill_gaps->>'{skill}' IS NOT NULL"
+}
 
 @eval.route('/db')
 def daba():
-    # skills = ["HTML","CSS"]
-    # tasks =db.session.query(TaskSkill).from_statement(text("SELECT * FROM task_skills WHERE CAST(skill_values->>'HTML' AS INTEGER)>=1000 and CAST(skill_values->>'CSS' AS INTEGER)>=1000")).all()
-    # print(tasks)
-    # session["qno"]=None
+    skills = ["HTML","CSS","JS"]
+    # k=500
+    # userskill = UserSkill.query.filter_by(user_id=session["user_id"]).first()
+    # errors = []
+    # queries = {}
+    # for skill in skills:
+    #     if userskill.skill_values.get(skill) is None:
+    #         errors.append(skill)
+    #         continue
+    #     skillvalue = userskill.skill_values[skill]
+    #     queries[skill] = f"CAST(skill_values->>'{skill}' AS INTEGER) BETWEEN {skillvalue-k} AND {skillvalue+k}"
+    
+    # if len(errors)>0:
+    #     print(errors)
+    
+    # task_ids = []
+    # for length in range(1,len(skills)+1):
+        
+    #     st = "SELECT task_id FROM task_skills WHERE "
+    #     ed = f" length ={length}"
+    #     combos = list(itertools.combinations(skills,length))
+    #     for combo in combos:
+    #         sql = st
+    #         for skill in combo:
+    #             sql += queries[skill]+ " AND "
+    #         sql +=ed
+    #         res = db.engine.execute(sql).fetchall()
+    #         res =list(itertools.chain(*res))
+    #         print(res)
+    #         task_ids.extend(res)
+    # print(task_ids)
 
-    # res = db.session.query(func.avg(Batches.time),func.stddev_pop(Batches.time)).filter_by(user_id=1).first()
-    # print(res)
+    for skill in skills:
+        obs_sql = sqls["OB_PF"].format(skill=skill,user_id=1)
+        res =db.engine.execute(obs_sql).fetchone()
+        print(skill ,res)
 
-
-    # task_id =1
-    # user_id =1
-    # result ={"answer":"TheAnswer"}
-    # submission = Submissions(task_id=task_id,user_id=user_id,result=result)
-    # db.session.add(submission)
-    # db.session.commit()
-    # db.session.flush()
-    # sub_id = submission.id
-    # batch_no=1
-    # for i in range(10):
-    #     quality = random.randint(1,101)
-    #     time = random.randint(300,500)
-    #     skillgaps = {'HTML': random.randint(500,700)}
-    #     batch = Batches(batch_number=batch_no,user_id=user_id,task_id=task_id,submission_id=sub_id,quality=quality,time=time,skills=skillgaps)
-    #     db.session.add(batch)
-    #     db.session.commit()
-    res=  db.engine.execute("SElECT percent_rank FROM  (SELECT time, PERCENT_RANK() OVER(order by time) FROM batches where task_id={}) pt where time={}".format(1,322)).fetchall()
-    print(res[0][0])
     return 'Hello'
 
 class Problem(View):
         decorators = [login_required]
 
+        def getquery(self,skill,k,skillvalue):
+            return f"CAST(skill_values->>'{skill}'BETWEEN {skillvalue-k} AND {skillvalue+k}"
+
         def get_task_ids(self,skills):
             skills = ["HTML","CSS"]
+            k=500
+            userskill = UserSkill.query.filter_by(user_id=session["user_id"]).first()
+            errors = []
+            queries = {}
+            for skill in skills:
+                if userskill.skill_values.get(skill) is None:
+                    errors.append(skill)
+                    continue
+                skillvalue = userskill.skill_values[skill]
+                queries[skill] = f"CAST(skill_values->>'{skill}' AS INTEGER) BETWEEN {skillvalue-k} AND {skillvalue+k}"
+            
+            if len(errors)>=0:
+                return -1, "No skills for "+str(errors)
+            
+            task_ids = []
+            for length in range(1,len(skills)+1):
+                st = "SELECT * FROM task_skills WHERE "
+                ed = f" length ={length}"
+                combos = list(itertools.combinations(skills,length))
+                for combo in combos:
+                    sql = st
+                    for skill in combo:
+                        sql += queries[skill]+ " AND "
+                    sql +=ed
+                    res = db.engine.execute(sql).fetchall()
+                    res =list(itertools.chain(*res))
+                    task_ids.extend(res)
+            
+            ## Calculate Performance Factors for skills
+            #Calculate Observed Pf
+            Pfs ={}
+            for skill in skills:
+                obs_sql = sqls["OB_PF"].format(skill=skill,user_id=session["user_id"])
+                res =db.engine.execute(obs_sql).fetchone()
+                print(res)
+
+
+
             tasks =db.session.query(TaskSkill).from_statement(text("SELECT * FROM task_skills WHERE CAST(skill_values->>'HTML' AS INTEGER)>=1000 and CAST(skill_values->>'CSS' AS INTEGER)>=1000")).all()
             task_ids =[ task.task_id for task in tasks]
             return task_ids
@@ -66,8 +121,11 @@ class Problem(View):
                 if qno is not None and session.get("qno")==qno:
                     session["qno"] = qno+1
             elif skills is not None:
+                session["task_ids"],err = self.get_task_ids(skills)
+                if(session["tasks_ids"]==-1):
+                    flash(err)
+                    return redirect(url_for('index'))
                 session["qno"]=1
-                session["task_ids"] = self.get_task_ids(skills)
                 session["skills"]=skills
                 print(session["task_ids"])
             else:
@@ -157,7 +215,7 @@ def update_skill_batch(user_id,task_id,sub_id,quality,time,type):
     score = quality*percentile
     #Update Skills
 
-    user_skill_cnts = userskill.skillcnts
+    user_skill_cnts = userskill.skill_cnts
     task_cnt = taskskill.cnt
 
     task_k = 100/sqrt(1+task_cnt)
@@ -181,7 +239,7 @@ def update_skill_batch(user_id,task_id,sub_id,quality,time,type):
         task_cnt +=1
 
     userskill.skill_values = user_skill_values
-    userskill.skillcnts = user_skill_cnts
+    userskill.skill_cnts = user_skill_cnts
 
     taskskill.cnt = task_cnt
     taskskill.skill_values = task_skill_values
@@ -192,12 +250,6 @@ def update_skill_batch(user_id,task_id,sub_id,quality,time,type):
         
 
             
-
-
-
-    #Update Skill based on type
-    # for skill in task_skill_values:
-
 
 
 

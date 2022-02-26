@@ -46,6 +46,7 @@ class UserSkill(db.Model):
     id = db.Column(db.Integer, primary_key=True) 
     user_id= db.Column(db.Integer(), db.ForeignKey('users.id'))
     skill_values = db.Column(JSON, nullable=false)
+    skill_cnts = db.Column(JSON,nullable=false)
 
 class Task(db.Model):
     __tablename__='tasks'
@@ -61,6 +62,8 @@ class TaskSkill(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     task_id = db.Column(db.Integer(), db.ForeignKey('users.id'))
     skill_values = db.Column(JSON, nullable=false)
+    cnt = db.Column(db.Integer,nullable=False)
+    length = db.Column(db.Integer,nullable=False)
 
 class Submissions(db.Model):
     __tablename__='submissions'
