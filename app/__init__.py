@@ -28,6 +28,7 @@ app.register_blueprint(addTasks, url_prefix='/addTasks')
 @app.route('/',methods=['GET','POST'])
 @login_required
 def index():
+    session["qno"]=None
     form = SkillForm()
     if form.validate_on_submit():
         if form.submit1.data:

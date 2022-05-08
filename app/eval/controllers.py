@@ -65,6 +65,7 @@ class Problem(View):
             return f"CAST(skill_values->>'{skill}'BETWEEN {skillvalue-k} AND {skillvalue+k}"
 
         def get_task_ids(self,skills):
+            return [1,2,3,4,5,6],""
             skills = ["HTML","CSS"]
             k=500
             userskill = UserSkill.query.filter_by(user_id=session["user_id"]).first()
@@ -109,32 +110,36 @@ class Problem(View):
             return task_ids
 
         def dispatch_request(self):
-            session["qno"]=None
-            print("Logged In: ", session["user_id"])
-            qno = request.form.get('qno')
+            print("Logged In: ", session["user_id"], "Qno is ",session["qno"])
+            qno = request.args.get('qno')
+            print(request.args)
             if qno:
                 qno = int(qno)
+                print("qno from prev question: ",qno)
             skills = request.args.get('skills') 
-
 
             if session.get("qno")is not None :
                 if qno is not None and session.get("qno")==qno:
                     session["qno"] = qno+1
             elif skills is not None:
                 session["task_ids"],err = self.get_task_ids(skills)
-                if(session["tasks_ids"]==-1):
+                if(session["task_ids"]==-1):
                     flash(err)
                     return redirect(url_for('index'))
                 session["qno"]=1
                 session["skills"]=skills
-                print(session["task_ids"])
+                print(session["task_ids"],session["qno"])
             else:
                 flash("There is no previous session and Can't Start new session without any Skills")
                 return redirect(url_for('index'))
 
             curr_q = session["qno"]
+            #Batch Completed
+            if(curr_q>=len(session["task_ids"])):
+                flash("Batch Completed")
+                return redirect(url_for('index'))
             task_id =session["task_ids"][curr_q-1]
-            task = Task.query.filter_by(id=1).first()
+            task = Task.query.filter_by(id=task_id).first()
             session["task_skills"]=task.skills.lower().split('||')
             session["task_e_code"]=task.e_code
             session["task_q_code"]=task.q_code
@@ -189,6 +194,7 @@ def create_file(filename,content):
     text_file.close()
 
 def update_skill_batch(user_id,task_id,sub_id,quality,time,type):
+    return
     #Get User Object
     user = User.query.filter_by(id=user_id).first()
     userskill = UserSkill.query.filter_by(user_id=user_id).first()
