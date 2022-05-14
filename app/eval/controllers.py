@@ -7,62 +7,45 @@ from sqlalchemy import text
 from sqlalchemy.sql import func
 from app.eval.codechecker import codechecker,STATUS_CODES
 from app.eval.forms import MCQForm
-import os,random,itertools
+import os,random,itertools,math
+from scipy.stats import skewnorm
+from collections import OrderedDict
+import datetime,time
 eval = Blueprint('eval',__name__)
 
 
 sqls ={
     "OB_PF": "SELECT avg(quality) ,avg(time) ,avg(CAST(skill_gaps->>'{skill}' AS INTEGER)) FROM batches \
 WHERE batch_number= (SELECT batch_number FROM batches WHERE user_id={user_id} ORDER BY batch_number DESC LIMIT 1) \
-AND skill_gaps->>'{skill}' IS NOT NULL"
+AND skill_gaps->>'{skill}' IS NOT NULL",
+"EXP_PF": "SELECT avg(quality), avg(time) FROM batches WHERE user_id={user_id} AND CAST(skill_gaps->>'{skill}' AS INTEGER) BETWEEN {lower} AND {upper}"
 }
 
 @eval.route('/db')
 def daba():
-    skills = ["HTML","CSS","JS"]
-    # k=500
-    # userskill = UserSkill.query.filter_by(user_id=session["user_id"]).first()
-    # errors = []
-    # queries = {}
-    # for skill in skills:
-    #     if userskill.skill_values.get(skill) is None:
-    #         errors.append(skill)
-    #         continue
-    #     skillvalue = userskill.skill_values[skill]
-    #     queries[skill] = f"CAST(skill_values->>'{skill}' AS INTEGER) BETWEEN {skillvalue-k} AND {skillvalue+k}"
-    
-    # if len(errors)>0:
-    #     print(errors)
-    
-    # task_ids = []
-    # for length in range(1,len(skills)+1):
-        
-    #     st = "SELECT task_id FROM task_skills WHERE "
-    #     ed = f" length ={length}"
-    #     combos = list(itertools.combinations(skills,length))
-    #     for combo in combos:
-    #         sql = st
-    #         for skill in combo:
-    #             sql += queries[skill]+ " AND "
-    #         sql +=ed
-    #         res = db.engine.execute(sql).fetchall()
-    #         res =list(itertools.chain(*res))
-    #         print(res)
-    #         task_ids.extend(res)
-    # print(task_ids)
-
-    for skill in skills:
-        obs_sql = sqls["OB_PF"].format(skill=skill,user_id=1)
-        res =db.engine.execute(obs_sql).fetchone()
-        print(skill ,res)
-
-    return 'Hello'
+    d = datetime.datetime.utcnow()
+    start_date = int((d - datetime.datetime(1970, 1, 1)).total_seconds()*1000)
+    return render_template('eval/base_type.html',start_date=start_date)
+  
 
 class Problem(View):
         decorators = [login_required]
 
         def getquery(self,skill,k,skillvalue):
             return f"CAST(skill_values->>'{skill}'BETWEEN {skillvalue-k} AND {skillvalue+k}"
+
+        def get_performance_factors(skills,user_id):
+            pfs = {}
+            for skill in skills:
+                obs_sql = sqls["OB_PF"].format(skill=skill,user_id=user_id)
+                ob =db.engine.execute(obs_sql).fetchone()
+                if ob[2] is not None:
+                    exp_sql = sqls["EXP_PF"].format(skill=skill,user_id=user_id,lower=ob[2]-100,upper=ob[2]+100)
+                    exp = db.engine.execute(exp_sql).fetchone()
+                    d = math.sqrt((exp[0]-ob[0])**2 + (exp[1]-ob[1])**2)
+                    s = math.erf(d)
+                    pfs[skill]=s
+            return pfs
 
         def get_task_ids(self,skills):
             return [1,2,3,4,5,6],""
@@ -95,19 +78,51 @@ class Problem(View):
                     res =list(itertools.chain(*res))
                     task_ids.extend(res)
             
-            ## Calculate Performance Factors for skills
-            #Calculate Observed Pf
-            Pfs ={}
-            for skill in skills:
-                obs_sql = sqls["OB_PF"].format(skill=skill,user_id=session["user_id"])
-                res =db.engine.execute(obs_sql).fetchone()
-                print(res)
+
+            Pfs = get_performance_factors(skills,session["user_id"])
+            skill_values={}
+            task_values ={}
+            for task_id in task_ids:
+                    query = f"SELECT skill_values FROM task_skills where task_id={task_id}"
+                    values =db.engine.execute(query).fetchone()[0]
+                    task_values[task_id]=values
+            userskill = UserSkill.query.filter_by(user_id=session["user_id"]).first() 
+            # print(userskill.skill_values)
+            skillgaps ={}
+            # print(task_values)
+            for task in task_values.values():
+                # print(task)
+                for skill in task:
+                    if skillgaps.get(skill) is None:
+                        skillgaps[skill]=[]
+                    skillgaps[skill].append(task[skill] - userskill.skill_values[skill])
+
+            means ={}
+            sds ={}
+            for skill in skillgaps:
+                mean = sum(skillgaps[skill]) / len(skillgaps[skill])
+                variance = sum([((x - mean) ** 2) for x in skillgaps[skill]]) / len(skillgaps[skill])
+                sd = variance ** 0.5
+                means[skill]=mean
+                sds[skill]=sd
+            learning_potentials = {}
+            for task_id in task_values:
+                lp =0
+                for skill in task_values[task_id]:
+                    z = (task_values[task_id][skill] - means[skill])/sds[skill]
+                    lp +=skewnorm.pdf(z,pfs[skill])
+                learning_potentials[task_id]=lp
+            
+            sorted_taskids =dict(sorted(learning_potentials.items(),key=lambda item: item[1]))
+            sorted_taskids = OrderedDict(reversed(list(sorted_taskids.items())))
+            res = list(sorted_taskids.keys())
+            res = res[:min(10,len(res))]
+            return res ,""            
+                    
 
 
 
-            tasks =db.session.query(TaskSkill).from_statement(text("SELECT * FROM task_skills WHERE CAST(skill_values->>'HTML' AS INTEGER)>=1000 and CAST(skill_values->>'CSS' AS INTEGER)>=1000")).all()
-            task_ids =[ task.task_id for task in tasks]
-            return task_ids
+            
 
         def dispatch_request(self):
             print("Logged In: ", session["user_id"], "Qno is ",session["qno"])
@@ -175,6 +190,11 @@ class Problem(View):
 
             return render_template('404.html')
             
+
+
+
+
+
 
 eval.add_url_rule('/temp',view_func=Problem.as_view('temp'))
 eval.add_url_rule('/test',view_func=Problem.as_view('test'))

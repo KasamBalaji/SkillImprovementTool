@@ -5,7 +5,7 @@ DEBUG = True
 import os
 BASE_DIR = os.path.abspath(os.path.dirname(__file__)) 
 SQLALCHEMY_DATABASE_URI = 'postgresql://iwypzckv:oQ_hgRObKtIL9ygc7p2n5LN7EbIZRYCp@abul.db.elephantsql.com:5432/iwypzckv'
-
+SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 # Application threads. A common general assumption is
 # using 2 per available processor cores - to handle

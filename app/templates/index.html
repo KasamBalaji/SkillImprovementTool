@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% import "bootstrap/wtf.html" as wtf %}
-{% block title %}Flasky{% endblock %}
+{% block title %}Improve{% endblock %}
 
 {% block page_content %}
 
@@ -25,7 +25,7 @@
         background-color:#231F20;
         text-align: justify;
         padding-top: 20px;
-        font-family:cursive;
+        font-family:Arial, Helvetica, sans-serif;
         padding-bottom: 40px;
         text-align:center;
         color:white;
@@ -34,19 +34,19 @@
         background-color:grey;
         text-align: justify;
         padding-top: 20px;
-        font-family:cursive;
+        font-family:Arial, Helvetica, sans-serif;
         padding-bottom: 40px;
         text-align:center;
         color:white;
     }
 </style>
-    <div class="page-header">
+    <!-- <div class="page-header">
     <h1>Hello, {% if current_user.is_authenticated %}{{ current_user.username }}{% else %}Stranger{% endif %}!</h1>
-</div>
+</div> -->
 <div class="first">
-<h1 style="text-align:center;font-size:x-large"> Welcome to SKILL IMPROVEMENT TOOL</h1>
-            A free, active, social, personalised educational tool
-Enhance your students’ learning by providing personalised study pathways 
+<h1 style="text-align:center;font-size:x-large"> SKILL IMPROVEMENT TOOL</h1>
+            <!-- A free, active, social, personalised educational tool
+Enhance your students’ learning by providing personalised study pathways  -->
 </div>
 <div>
     {{ wtf.quick_form(form) }}
@@ -55,9 +55,9 @@ Enhance your students’ learning by providing personalised study pathways
 <div class="parallax"></div>
 
 <div class="second">
-    <h1>About us </h1>
+    <h1>About Platform </h1>
    <p>
-    students in a variety of learning activities such as creating and evaluating learning resources which help them develop critical thinking, creativity, collaboration and communication.
+    Users can improve their skills optimally and also get certified by our platform
    </p>
 </div>
 <script >

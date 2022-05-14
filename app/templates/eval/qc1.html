@@ -3,29 +3,43 @@
 
 {% block page_content %}
 
-<h1>{{task_data["title"]}}</h1>
-<h4>{{task_data["description"]}}</h2>
+
+
+<style>
+    #elapsed-time {
+        float:right;
+}
+.heading{
+    background-color: black;
+    color:white;
+}
+</style>
+<button type="button" class="btn btn-primary" id="elapsed-time"></button>
+<br><br>
+<h3 class="heading">{{task_data["title"]}}</h3>
+<div class="p-3 mb-2 bg-info text-dark">
 <br>
-<h2>Instructions</h2>
-<h4>{{task_data["instructions"]}}</h2>
+<h4>{{task_data["description"]}}</h4>
 <br>
-<a href="{{task_data['referencelinks']}}">{{task_data["reference_links"]}}</a>
+</div>
 <br>
-<div id="editor">
-    
+<h3 class="heading">Instructions</h3>
+<div class="p-3 mb-2 bg-info text-dark">
+    <br>
+    <h4>{{task_data["instructions"]}}</h4>
+</div>
+<h4 class="heading">Reference Links</h4>
+<div class="p-3 mb-2 bg-info text-dark">
+<br>
+<a href='{{task_data["referencelinks"]}}'>{{task_data["referencelinks"]}}</a>
+<br>
 </div>
 
-
-
-
-
-
-
-
+<div id="editor"></div>
 <div id="testcases"></div>
-<button type="button" onclick="testSol()">Test</button>
-<button type="button" onclick="submitSol()">Submit</button>
-
+<button type="button" class="btn btn-danger" onclick="testSol()">Test</button>
+<button type="button" class="btn btn-primary" onclick="submitSol()">Submit</button>
+<div id="error"></div>
 
 
 
@@ -49,6 +63,91 @@
 </style>
 
 <!-- Scripts -->
+<script type="text/javascript">
+    //Time and Date Handling Function
+    
+    //API for time and date functions
+    
+    var timeAndDateHandling = {
+        /** Computes the elapsed time since the moment the function is called in the format mm:ss or hh:mm:ss
+         * @param {String} startTime - start time to compute the elapsed time since
+         * @returns {String} elapsed time in mm:ss format or hh:mm:ss format if elapsed hours are 0.
+         */
+        getElapsedTime: function (startTime) {
+    
+            // Record end time
+            let endTime = new Date();
+    
+            // Compute time difference in milliseconds
+            let timeDiff = endTime.getTime() - startTime.getTime();
+    
+            // Convert time difference from milliseconds to seconds
+            timeDiff = timeDiff / 1000;
+    
+            // Extract integer seconds that dont form a minute using %
+            let seconds = Math.floor(timeDiff % 60); //ignoring uncomplete seconds (floor)
+    
+            // Pad seconds with a zero if neccessary
+            let secondsAsString = seconds < 10 ? "0" + seconds : seconds + "";
+    
+            // Convert time difference from seconds to minutes using %
+            timeDiff = Math.floor(timeDiff / 60);
+    
+            // Extract integer minutes that don't form an hour using %
+            let minutes = timeDiff % 60; //no need to floor possible incomplete minutes, becase they've been handled as seconds
+    
+            // Pad minutes with a zero if neccessary
+            let minutesAsString = minutes < 10 ? "0" + minutes : minutes + "";
+    
+            // Convert time difference from minutes to hours
+            timeDiff = Math.floor(timeDiff / 60);
+    
+            // Extract integer hours that don't form a day using %
+            let hours = timeDiff % 24; //no need to floor possible incomplete hours, becase they've been handled as seconds
+    
+            // Convert time difference from hours to days
+            timeDiff = Math.floor(timeDiff / 24);
+    
+            // The rest of timeDiff is number of days
+            let days = timeDiff;
+    
+            let totalHours = hours + (days * 24); // add days to hours
+            let totalHoursAsString = totalHours < 10 ? "0" + totalHours : totalHours + "";
+    
+            if (totalHoursAsString === "00") {
+                return minutesAsString + ":" + secondsAsString;
+            } else {
+                return totalHoursAsString + ":" + minutesAsString + ":" + secondsAsString;
+            }
+        }
+    }
+    
+    
+    
+    window.addEventListener("load", () => {
+    console.log('Loaded');
+    var elapsedTimeText = document.getElementById("elapsed-time");
+    var startTime = new Date({{start_date}});
+    
+    
+    elapsedTimeIntervalRef = setInterval(() => {
+            // Compute the elapsed time & display
+            elapsedTimeText.innerText = timeAndDateHandling.getElapsedTime(startTime); //pass the actual record start time
+    
+            // Improvement: Can Stop elapsed time and resert when a maximum elapsed time
+            //              has been reached.
+        }, 1000);
+    });
+    </script>
+
+
+
+
+
+
+
+
+
 <script src="https://pagecdn.io/lib/ace/1.4.13/ace.js" crossorigin="anonymous" integrity="sha256-bS3VAQePcKYmsvI+8BdG2QJAVb9FbiZLgM5vK2/+TcM=" ></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script>
