@@ -1,11 +1,12 @@
 from flask import Blueprint,request,redirect,url_for,flash,render_template,jsonify,session
 from flask.views import View
 from flask_login import login_required 
-from app.models import TaskSkill,Task,Batches,UserSkill,Submissions,TaskSkillUpdate,CrowdEvaluations
+from app.models import TaskSkill,Task,Batches,UserSkill,Submissions,TaskSkillUpdate,CrowdEvaluations,User
 from app import db
 from sqlalchemy import text
 from sqlalchemy.sql import func
 from app.eval.codechecker import codechecker,STATUS_CODES
+from sqlalchemy.orm.attributes import flag_modified
 from app.eval.forms import MCQForm
 import os,random,itertools,math
 from scipy.stats import skewnorm
@@ -23,10 +24,12 @@ AND skill_gaps->>'{skill}' IS NOT NULL",
 
 @eval.route('/db')
 def daba():
-    d = datetime.datetime.utcnow()
-    start_date = int((d - datetime.datetime(1970, 1, 1)).total_seconds()*1000)
-    return render_template('eval/base_type.html',start_date=start_date)
-  
+    task_id=1
+    task_skill_values ={}
+    skill = db.engine.execute(f"SELECT skill from gtask_skills where task_id= {task_id}").fetchone()[0]
+    value = db.engine.execute(f"SELECT value from gtask_skills where task_id={task_id}").fetchone()[0]
+    task_skill_values[skill]=value
+    return 'Hello' + str(task_skill_values)
 
 @eval.route('/evaluate/<cid>',methods=['GET','POST'])
 def evaluate(cid):
@@ -99,7 +102,7 @@ class Problem(View):
             return pfs
 
         def get_task_ids(self,skills):
-            return [7],""
+            return [2],""
             k=500
             userskill = UserSkill.query.filter_by(user_id=session["user_id"]).first()
             errors = []
@@ -183,11 +186,11 @@ class Problem(View):
 
             ##Assigning Next Question or get Tasks for new batch
             qno = request.args.get('qno')
-            print(request.args)
+            print(request.args.getlist('skills'))
             if qno:
                 qno = int(qno)
                 print("qno from prev question: ",qno)
-            skills = request.args.get('skills') 
+            skills = request.args.getlist('skills')
 
             if session.get("qno")is not None :
                 if qno is not None and session.get("qno")==qno:
@@ -226,6 +229,7 @@ class Problem(View):
             session["task_data"]=task.task_content
             session["type"]=self.get_type()
             
+            print(session["type"], " IN session")
             print(task)
             qc=task.q_code
 
@@ -263,12 +267,49 @@ class Problem(View):
             return render_template('404.html')
             
 
+class Golden(Problem):
+    def get_task_ids(self,skills):
+        # return [2],""
+
+        #Along with getting task_ids, set skill values to defaul it none
+        user_id = session["user_id"]
+        userskill = UserSkill.query.filter_by(user_id=user_id).first()
+        if userskill is None:
+            db.engine.execute(f'INSERT INTO user_skills (user_id) VALUES ({user_id})')
+            userskill = UserSkill.query.filter_by(user_id=user_id).first()
+        print("skills ", skills)
+        user_skill_values = userskill.skill_values
+        user_skill_cnts = userskill.skill_cnts
+        print(user_skill_cnts)
+        task_ids= []
+        for skill in skills:
+            print(skill,"skill")
+            if user_skill_values.get(skill) is None:
+                user_skill_values[skill] =1500
+            if user_skill_cnts.get(skill) is None:
+                user_skill_cnts[skill]=0
+            ids= db.engine.execute(f"SELECT id from gtask_skills where skill ='{skill}'").fetchall()
+            for x in ids:
+                task_ids.append(x[0])
+        print(task_ids)
+
+        userskill.skill_values=user_skill_values
+        userskill.skill_cnts = user_skill_cnts
+        flag_modified(userskill,"skill_values")
+        flag_modified(userskill, "skill_cnts")
+        db.session.merge(userskill)
+        db.session.flush()
+        db.session.commit()
+        return task_ids,""
+
+    def get_type(self):
+        return 'gtype'
 
 
 
 
 
-eval.add_url_rule('/temp',view_func=Problem.as_view('temp'))
+eval.add_url_rule('/temp',view_func=Golden.as_view('temp'))
 eval.add_url_rule('/test',view_func=Problem.as_view('test'))
 
 
@@ -293,14 +334,22 @@ def create_file(filename,content):
     text_file.close()
 
 def update_skill_batch(user_id,task_id,sub_id,quality,time,type):
-    return
     #Get User Object
     user = User.query.filter_by(id=user_id).first()
     userskill = UserSkill.query.filter_by(user_id=user_id).first()
     user_skill_values = userskill.skill_values
+    print(type)
     #Get Task Skills Object
-    taskskill = TaskSkill.query.filter_by(task_id=task_id).first()
-    task_skill_values = taskskill.skill_values
+    if type!='gtype':
+        taskskill = TaskSkill.query.filter_by(task_id=task_id).first()
+        task_skill_values = taskskill.skill_values
+        task_cnt = taskskill.cnt
+        task_k =float( 200)/(1+task_cnt)**0.25
+    else:
+        task_skill_values ={}
+        skill = db.engine.execute(f"SELECT skill from gtask_skills where task_id= {task_id}").fetchone()[0]
+        value = db.engine.execute(f"SELECT value from gtask_skills where task_id={task_id}").fetchone()[0]
+        task_skill_values[skill]=value
 
     #Get Skill Gaps for Skill in taskskill
     skillgaps ={}
@@ -310,7 +359,7 @@ def update_skill_batch(user_id,task_id,sub_id,quality,time,type):
     #Batch Number
     batch_no = user.batches_completed +1
     #Create a Batch
-    batch = Batches(batch_number=batch_no,user_id=user_id,task_id=task_id,submission_id=sub_id,quality=quality,time=time,skills=skillgaps)
+    batch = Batches(batch_number=batch_no,user_id=user_id,task_id=task_id,submission_id=sub_id,quality=quality,time=time,skill_gaps=skillgaps)
     db.session.add(batch)
     db.session.commit()
 
@@ -321,36 +370,58 @@ def update_skill_batch(user_id,task_id,sub_id,quality,time,type):
     #Update Skills
 
     user_skill_cnts = userskill.skill_cnts
-    task_cnt = taskskill.cnt
+    print(user_skill_cnts)
+    
 
-    task_k = 100/sqrt(1+task_cnt)
-
+    
+    print(" Before Updating")
+    print(user_skill_values)
+    print(task_skill_values)
     for skill in task_skill_values:
         t_rating = task_skill_values[skill]
         u_rating = user_skill_values[skill]
-        user_k = 100/sqrt(1+ user_skill_cnts[skill])
+        user_k = float(200)/float((1+ user_skill_cnts[skill])**0.25)
         exp = t_rating- u_rating
-        expected_score =  1/((10.0**(exp))+1)
+        try:
+            expected_score =  1/((10.0**(exp))+1)
+        except:
+            expected_score =0
 
-        if task_cnt>=50 or type=='gtype':
+        if type!='gtype':
+            if task_cnt>=50:
+                user_skill_values[skill] = u_rating + user_k*(score- expected_score)
+                user_skill_cnts[skill] +=1
+            task_skill_values[skill] = t_rating - task_k*(score-expected_score)
+
+        else :
             user_skill_values[skill] = u_rating + user_k*(score- expected_score)
             user_skill_cnts[skill] +=1
+    
             
         
-        if type!='gtype':
-            task_skill_values[skill] = t_rating - task_k*(score-expected_score)
+       
     
     if type!='gtype':
         task_cnt +=1
 
     userskill.skill_values = user_skill_values
+    flag_modified(userskill,"skill_values")
     userskill.skill_cnts = user_skill_cnts
+    flag_modified(userskill,"skill_cnts")
 
-    taskskill.cnt = task_cnt
-    taskskill.skill_values = task_skill_values
+    if type!='gtype':
+        taskskill.cnt = task_cnt
+        flag_modified(taskskill,"cnt")
+        taskskill.skill_values = task_skill_values
+        flag_modified(taskskill,"skill_values")
+    
+    print("After Updating")
+    print(user_skill_values)
+    print(task_skill_values)
 
-    db.session.add(userskill)
-    db.session.add(taskskill)
+    db.session.merge(userskill)
+    if type!='gtype':
+        db.session.merge(taskskill) 
     db.session.commit()
         
 
@@ -372,7 +443,7 @@ def submit():
         type = data["type"]
         qno = int(data["qno"])
         time = data["time"]
-
+        print(type , "in submit")
         q_code = session["task_q_code"]
         e_code = session["task_e_code"]
         task_id = session["task_ids"][qno-1]
@@ -420,7 +491,7 @@ def submit():
         
         if q_code=='qc3':
             print(data)
-            if e_code=='ec4':
+            if e_code=='ec3':
                 answer = data["answer"].lower()
                 if (answer == session["task_data"]["answer"].lower()):
                     quality =1

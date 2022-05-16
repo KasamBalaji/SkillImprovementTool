@@ -96,7 +96,7 @@ class Batches(db.Model):
     submission_id = db.Column(db.Integer, db.ForeignKey('submissions.id'))
     quality= db.Column(db.Float)
     time = db.Column(db.Float)
-    skills = db.Column(JSON, nullable=False)
+    skill_gaps = db.Column(JSON, nullable=False)
 
 
 class CrowdEvaluations(db.Model):
