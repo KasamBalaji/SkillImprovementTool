@@ -18,7 +18,11 @@ itsdangerous==2.0.1
 Jinja2==3.0.3
 jsonify==0.5
 MarkupSafe==2.0.1
+numpy==1.21.6
+pip==20.1.1
 psycopg2==2.9.3
+scipy==1.7.3
+setuptools==47.1.0
 SQLAlchemy==1.4.31
 typing-extensions==4.0.1
 visitor==0.1.3
