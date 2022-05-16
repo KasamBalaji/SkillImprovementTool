@@ -60,6 +60,27 @@ def crowdevaluate():
     return render_template('eval/crowdlist.html',tasks=tasks)
     
 
+@eval.route('/update')
+def update():
+    user_id = session["user_id"]
+    list = db.engine.execute(f"SELECT * from crowdevaluation where user_id={user_id} and count >=100").fetchall()
+    for row in list:
+        cid = row[0]
+        task_id = row[1]
+        time  = row[3]['time']
+        type = row[3]['type']
+        answer = row[3]['answer']
+        quality = row[4]
+        print(cid,task_id,time,type,quality)
+        result = {"answer":answer}
+        sub_id =create_submission(task_id,user_id,result)
+        update_skill_batch(user_id,task_id,sub_id,quality,time,type)
+        print("Updation Done")
+        item = CrowdEvaluations.query.filter_by(id=cid).first()
+        db.session.delete(item)
+        db.session.commit()
+    return redirect(url_for('index'))
+
 
 class Problem(View):
         decorators = [login_required]
@@ -350,7 +371,7 @@ def submit():
         data = request.get_json()
         type = data["type"]
         qno = int(data["qno"])
-        # time = data["time"]
+        time = data["time"]
 
         q_code = session["task_q_code"]
         e_code = session["task_e_code"]
@@ -390,7 +411,6 @@ def submit():
                     results = {'result': f"{cnt}/{len(inputs)} Testcases got solved"}
                     return results
                 quality = cnt/len(inputs)
-                time = 500
                 result = {"answer":code}
                 sub_id =create_submission(task_id,user_id,result)
                 update_skill_batch(user_id,task_id,sub_id,quality,time,type)
@@ -406,7 +426,6 @@ def submit():
                     quality =1
                 else:
                     quality =0
-                time = 500
                 print(quality)
                 result = {"answer":answer}
                 sub_id =create_submission(task_id,user_id,result)
@@ -420,7 +439,6 @@ def submit():
                     quality=1
                 else:
                     quality=0
-                time = 500
                 print(quality)
                 result = {"answer":answer}
                 sub_id =create_submission(task_id,user_id,result)
@@ -429,13 +447,12 @@ def submit():
         if q_code=='qc5':
             print(data)
             answer = data["answer"]
-            time=500
             result= {"answer":answer,"time":time,"type":type}
             crowd_id = add_to_crowd(task_id,user_id,result,session["task_data"]["content"],)
             print(crowd_id)
 
 
-        results = {'result': f"Dummy Message"}
+        results = {'result': f"Empty Message"}
         return results        
 
 

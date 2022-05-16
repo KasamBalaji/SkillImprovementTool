@@ -1,4 +1,4 @@
-from flask import Flask,render_template,redirect,url_for,session
+from flask import Flask,render_template,redirect,url_for,session,flash
 from flask_bootstrap import Bootstrap
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager,login_required
@@ -38,3 +38,10 @@ def index():
     return render_template('index.html',form=form)
     
 
+
+@app.route('/ratings',methods=['GET'])
+def getratings():
+    user_id = session["user_id"]
+    skill =db.engine.execute(f'SELECT skill_values from user_skills where user_id={user_id}').fetchone()[0]
+
+    return render_template('ratings.html',skill=skill)

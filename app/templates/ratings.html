@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+{% block title %}Evaluate{% endblock %}
+
+
+
+{% block page_content %}
+
+{% for s in skill%}
+<h4>{{s}} : {{skill[s]}}</h4>
+
+{% endfor %}
+{% endblock %}

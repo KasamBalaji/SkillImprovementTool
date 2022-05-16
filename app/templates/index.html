@@ -48,9 +48,14 @@
             <!-- A free, active, social, personalised educational tool
 Enhance your students’ learning by providing personalised study pathways  -->
 </div>
+
 <div>
     {{ wtf.quick_form(form) }}
 </div>
+<br><br>
+<a href="{{url_for('eval.update')}}" class="btn btn-primary">Refresh Rating!</a>
+<a href="{{url_for('getratings')}}" class="btn btn-primary">Ratings</a>
+
 
 <div class="parallax"></div>
 
