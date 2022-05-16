@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+{% block title %}Evaluate{% endblock %}
+
+
+
+{% block page_content %}
+
+
+<style>
+    #elapsed-time {
+        float:right;
+}
+.heading{
+    background-color: black;
+    color:white;
+}
+</style>
+
+<h3 class="heading">Question</h3>
+<div class="p-3 mb-2 bg-info text-dark">
+<br>
+<h4>{{question}}</h4>
+<br>
+</div>
+
+<h3 class="heading">Submission</h3>
+<div class="p-3 mb-2 bg-info text-dark">
+<br>
+<h4>{{result}}</h4>
+<br>
+</div>
+
+<form method="post" action="#">
+{% for c in criteria %}
+<div>
+    <input type="range" id="{{c}}" name="{{c}}"
+           min="0" max="100">
+    <label for="volume">{{c}}</label>
+  </div>
+{% endfor %}
+<button type="submit" class="btn btn-primary">Submit</button> 
+</form>
+
+
+{% endblock %}

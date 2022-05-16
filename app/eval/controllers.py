@@ -1,7 +1,7 @@
 from flask import Blueprint,request,redirect,url_for,flash,render_template,jsonify,session
 from flask.views import View
 from flask_login import login_required 
-from app.models import TaskSkill,Task,Batches,UserSkill,Submissions,TaskSkillUpdate
+from app.models import TaskSkill,Task,Batches,UserSkill,Submissions,TaskSkillUpdate,CrowdEvaluations
 from app import db
 from sqlalchemy import text
 from sqlalchemy.sql import func
@@ -28,6 +28,39 @@ def daba():
     return render_template('eval/base_type.html',start_date=start_date)
   
 
+@eval.route('/evaluate/<cid>',methods=['GET','POST'])
+def evaluate(cid):
+    item = CrowdEvaluations.query.filter_by(id=cid).first()
+    task_id = item.task_id
+    question = item.title
+    task = Task.query.filter_by(id=task_id).first()
+    criteria = task.task_content["answer"].split('||')
+    weights = task.task_content["weights"].split('||')
+    result = item.result["answer"]
+
+    if request.method=='POST':
+        data = request.form
+        temp =0
+        for x,weight in zip(data.values(),weights):
+            temp = float(x)*float(weight)    
+        temp /=100
+        item.quality = (item.quality*item.count + temp)/(item.count +1)
+        item.count =item.count +1
+        db.session.add(item)
+        db.session.commit()
+        return redirect(url_for('eval.crowdevaluate'))
+
+    return render_template('eval/rubrics.html',question=question,criteria=criteria,result=result)
+
+@eval.route('/evaluate')
+def crowdevaluate():
+    user_id = 1
+    tasks= db.engine.execute(f"SELECT id, title from crowdevaluation where user_id <>{user_id}").fetchall()
+    print(tasks)
+    return render_template('eval/crowdlist.html',tasks=tasks)
+    
+
+
 class Problem(View):
         decorators = [login_required]
 
@@ -45,7 +78,7 @@ class Problem(View):
             return pfs
 
         def get_task_ids(self,skills):
-            return [1,2,3,4,5,6],""
+            return [7],""
             k=500
             userskill = UserSkill.query.filter_by(user_id=session["user_id"]).first()
             errors = []
@@ -159,7 +192,7 @@ class Problem(View):
 
             curr_q = session["qno"]
             #Batch Completed
-            if(curr_q>=len(session["task_ids"])):
+            if(curr_q>len(session["task_ids"])):
                 flash("Batch Completed")
                 return redirect(url_for('index'))
             
@@ -200,7 +233,10 @@ class Problem(View):
                 task_data = {key:task.task_content[key] for key in content_labels}
                 return render_template('eval/qc4.html',task_data=task_data,qno=session["qno"],start_date=session['start_date'],type=session["type"])
                 
-
+            if qc=='qc5':
+                content_labels = ["content","relatedtags","referencelinks"]
+                task_data = {key:task.task_content[key] for key in content_labels}
+                return render_template('eval/qc5.html',task_data=task_data,qno=session["qno"],start_date=session['start_date'],type=session["type"])
 
 
             return render_template('404.html')
@@ -216,12 +252,19 @@ eval.add_url_rule('/test',view_func=Problem.as_view('test'))
 
 
 def create_submission(task_id,user_id,result):
+    print("Submitting")
     submission = Submissions(task_id=task_id,user_id=user_id,result=result)
     db.session.add(submission)
     db.session.commit()
     db.session.flush()
     return submission.id
 
+def add_to_crowd(task_id,user_id,result,title):
+    item = CrowdEvaluations(task_id=task_id,user_id=user_id,result=result,quality=0,count=0,title=title)
+    db.session.add(item)
+    db.session.commit()
+    db.session.flush()
+    return item.id
 
 def create_file(filename,content):
     text_file = open(filename,"w")
@@ -383,7 +426,13 @@ def submit():
                 sub_id =create_submission(task_id,user_id,result)
                 update_skill_batch(user_id,task_id,sub_id,quality,time,type)
 
-
+        if q_code=='qc5':
+            print(data)
+            answer = data["answer"]
+            time=500
+            result= {"answer":answer,"time":time,"type":type}
+            crowd_id = add_to_crowd(task_id,user_id,result,session["task_data"]["content"],)
+            print(crowd_id)
 
 
         results = {'result': f"Dummy Message"}

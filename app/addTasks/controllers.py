@@ -34,6 +34,7 @@ def addingEssay():
         tasks =request.form
         content = tasks["content"] 
         relatedtags = tasks["relatedtags"]
+        weights= tasks["weights"]
         answer = tasks["criterias"] 
         links = tasks["links"] 
         skills =""

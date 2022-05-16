@@ -99,6 +99,18 @@ class Batches(db.Model):
     skills = db.Column(JSON, nullable=False)
 
 
+class CrowdEvaluations(db.Model):
+    __tablename__='crowdevaluation'
+    id = db.Column(db.Integer, primary_key=True)
+    task_id = db.Column(db.Integer(), db.ForeignKey('tasks.id'))
+    user_id = db.Column(db.Integer(), db.ForeignKey('users.id'))
+    result = db.Column(JSON, nullable=False)
+    quality = db.Column(db.Float)
+    count = db.Column(db.Integer)
+    title = db.Column(db.Text)
+    # time_stamp = db.Column(db.DateTime, server_default=db.func.now())
+
+
 
 
     

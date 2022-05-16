@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+{% block title %}Evaluate{% endblock %}
+
+
+
+{% block page_content %}
+
+{% for task in tasks%}
+<a href="{{url_for('eval.evaluate',cid=task[0])}}">{{task[1]}}</a>
+
+{% endfor %}
+{% endblock %}
