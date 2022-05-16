@@ -135,8 +135,10 @@
         var value =document.getElementById("answer").value;
         if (value==""){document.getElementById("error").innerHTML= "Answer can't be None";   return false; };
 
-   
-    var server_data ={answer: value,qno:"{{qno}}",type:"task"};
+    var endDate = new Date();
+    var startDate = new Date({{start_date}});
+    var time = endDate.getTime() -startDate.getTime();
+    var server_data ={answer: value,qno:"{{qno}}",type:"{{type}}",time:time};
     console.log(server_data);
         $.ajax({
     type: "POST",

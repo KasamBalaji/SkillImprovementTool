@@ -183,7 +183,10 @@ $.extend(
         });
     };
     function submitSol(){
-        var server_data ={code: editor.getValue(),qno:"{{qno}}",type:"task"};
+        var endDate = new Date();
+        var startDate = new Date({{start_date}});
+        var time = endDate.getTime() -startDate.getTime();
+        var server_data ={code: editor.getValue(),qno:"{{qno}}",type:"{{type}}",time:time};
             $.ajax({
         type: "POST",
         url: "{{url_for('eval.submit')}}",

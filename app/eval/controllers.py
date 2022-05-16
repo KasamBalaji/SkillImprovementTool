@@ -31,10 +31,7 @@ def daba():
 class Problem(View):
         decorators = [login_required]
 
-        def getquery(self,skill,k,skillvalue):
-            return f"CAST(skill_values->>'{skill}'BETWEEN {skillvalue-k} AND {skillvalue+k}"
-
-        def get_performance_factors(skills,user_id):
+        def get_performance_factors(self,skills,user_id):
             pfs = {}
             for skill in skills:
                 obs_sql = sqls["OB_PF"].format(skill=skill,user_id=user_id)
@@ -49,10 +46,11 @@ class Problem(View):
 
         def get_task_ids(self,skills):
             return [1,2,3,4,5,6],""
-            skills = ["HTML","CSS"]
             k=500
             userskill = UserSkill.query.filter_by(user_id=session["user_id"]).first()
             errors = []
+
+            #Creating Queries for each skill
             queries = {}
             for skill in skills:
                 if userskill.skill_values.get(skill) is None:
@@ -64,6 +62,7 @@ class Problem(View):
             if len(errors)>=0:
                 return -1, "No skills for "+str(errors)
             
+            #Getting tasks for given skill in a range
             task_ids = []
             for length in range(1,len(skills)+1):
                 st = "SELECT * FROM task_skills WHERE "
@@ -78,8 +77,10 @@ class Problem(View):
                     res =list(itertools.chain(*res))
                     task_ids.extend(res)
             
+            #Getting Performance Factors
+            Pfs = self.get_performance_factors(skills,session["user_id"])
 
-            Pfs = get_performance_factors(skills,session["user_id"])
+            #Getting Learning Potential
             skill_values={}
             task_values ={}
             for task_id in task_ids:
@@ -87,11 +88,8 @@ class Problem(View):
                     values =db.engine.execute(query).fetchone()[0]
                     task_values[task_id]=values
             userskill = UserSkill.query.filter_by(user_id=session["user_id"]).first() 
-            # print(userskill.skill_values)
             skillgaps ={}
-            # print(task_values)
             for task in task_values.values():
-                # print(task)
                 for skill in task:
                     if skillgaps.get(skill) is None:
                         skillgaps[skill]=[]
@@ -116,16 +114,20 @@ class Problem(View):
             sorted_taskids =dict(sorted(learning_potentials.items(),key=lambda item: item[1]))
             sorted_taskids = OrderedDict(reversed(list(sorted_taskids.items())))
             res = list(sorted_taskids.keys())
+            #Selecting Top 10 Tasks
             res = res[:min(10,len(res))]
             return res ,""            
                     
 
 
-
+        def get_type(self):
+            return 'ltype'
             
 
         def dispatch_request(self):
             print("Logged In: ", session["user_id"], "Qno is ",session["qno"])
+
+            ##Assigning Next Question or get Tasks for new batch
             qno = request.args.get('qno')
             print(request.args)
             if qno:
@@ -136,6 +138,10 @@ class Problem(View):
             if session.get("qno")is not None :
                 if qno is not None and session.get("qno")==qno:
                     session["qno"] = qno+1
+                    d = datetime.datetime.utcnow()
+                    start_date = int((d - datetime.datetime(1970, 1, 1)).total_seconds()*1000)
+                    session["start_date"]=start_date
+
             elif skills is not None:
                 session["task_ids"],err = self.get_task_ids(skills)
                 if(session["task_ids"]==-1):
@@ -143,6 +149,9 @@ class Problem(View):
                     return redirect(url_for('index'))
                 session["qno"]=1
                 session["skills"]=skills
+                d = datetime.datetime.utcnow()
+                start_date = int((d - datetime.datetime(1970, 1, 1)).total_seconds()*1000)
+                session["start_date"]=start_date
                 print(session["task_ids"],session["qno"])
             else:
                 flash("There is no previous session and Can't Start new session without any Skills")
@@ -153,14 +162,20 @@ class Problem(View):
             if(curr_q>=len(session["task_ids"])):
                 flash("Batch Completed")
                 return redirect(url_for('index'))
+            
+            ##Updating Task Details to Session
             task_id =session["task_ids"][curr_q-1]
             task = Task.query.filter_by(id=task_id).first()
             session["task_skills"]=task.skills.lower().split('||')
             session["task_e_code"]=task.e_code
             session["task_q_code"]=task.q_code
             session["task_data"]=task.task_content
+            session["type"]=self.get_type()
+            
             print(task)
             qc=task.q_code
+
+            ##Rendering Based On Question Code
             print("qc is ",qc)
             if qc=="qc1":
                 content_labels= ["title","description","instructions","constraints","examples","referencelinks"] 
@@ -169,7 +184,7 @@ class Problem(View):
                 if 'coding' in session["task_skills"]:
                     temp = ['python','java','cpp','c']
                     languages = [lang  for lang in temp if lang in session["skills"]]
-                return render_template('eval/qc1.html',task_data =task_data,qno=session["qno"],languages=languages)
+                return render_template('eval/qc1.html',task_data =task_data,qno=session["qno"],languages=languages,start_date=session["start_date"],type=session["type"])
             
             if qc=='qc3':
                 content_labels = ["content","options","relatedtags","referencelinks"]
@@ -178,12 +193,12 @@ class Problem(View):
                 choices = [(i+1,choice) for i,choice in zip(range(len(task_data["options"])),task_data["options"])]
                 form = MCQForm()
                 form.set(choices)
-                return render_template('eval/qc3.html',task_data=task_data,qno=session["qno"],form=form)
+                return render_template('eval/qc3.html',task_data=task_data,qno=session["qno"],form=form,start_date=session['start_date'],type=session["type"])
             
             if qc=='qc4':
                 content_labels = ["content","relatedtags","referencelinks"]
                 task_data = {key:task.task_content[key] for key in content_labels}
-                return render_template('eval/qc4.html',task_data=task_data,qno=session["qno"])
+                return render_template('eval/qc4.html',task_data=task_data,qno=session["qno"],start_date=session['start_date'],type=session["type"])
                 
 
 

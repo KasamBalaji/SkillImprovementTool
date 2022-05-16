@@ -28,6 +28,47 @@ def addQuestions():
         return render_template('addTasks/addingQuestions.html')
 
 
+@addTasks.route('/addingEssay',methods=['POST','GET'])
+def addingEssay():
+    if request.method =='POST':
+        tasks =request.form
+        content = tasks["content"] 
+        relatedtags = tasks["relatedtags"]
+        answer = tasks["criterias"] 
+        links = tasks["links"] 
+        skills =""
+        skill_list=['C++','JAVA','PYTHON','OOPS','HTML','CSS','JAVASCRIPT']
+        for skill in skill_list:
+            if request.form.get(skill):
+                skills=skills+skill+"||" 
+        skills = skills[:-2]
+        task_content = jsonify(
+            skills=skills,
+            content=content, 
+            relatedtags=relatedtags,
+            answer=answer,
+            referencelinks=links,
+        )
+        print(task_content.data)
+        task = Task(task_content={
+                "content" : content, 
+                "relatedtags" : relatedtags,
+                "answer" : answer,
+                "referencelinks" : links,
+        },
+                    skills=skills,
+                    tags=relatedtags,
+                    q_code='qc5',
+                    e_code='ce')
+        db.session.add(task)
+        db.session.commit()
+        return render_template('addTasks/index.html', tasks=tasks)
+
+    else:
+        return render_template('addTasks/addingEssayType.html')
+
+
+
 @addTasks.route('/addingFillInTheBlanks', methods=['POST', 'GET'])
 def addingFillInTheBlanks():
     if request.method == 'POST':
@@ -37,7 +78,7 @@ def addingFillInTheBlanks():
         answer = tasks["answer"] 
         links = tasks["links"] 
         skills =""
-        skill_list=['C++','JAVA','PYTHON','OOPS','HTML','CSS','JAVASCRIPT','APPTITUDE','CODING']
+        skill_list=['C++','JAVA','PYTHON','OOPS','HTML','CSS','JAVASCRIPT']
         for skill in skill_list:
             if request.form.get(skill):
                 skills=skills+skill+"||" 
@@ -77,7 +118,7 @@ def addingMUltipleChoiceQuestion():
         answer = tasks["answer"] 
         links = tasks["links"]
         skills =""
-        skill_list=['C++','JAVA','PYTHON','OOPS','HTML','CSS','JAVASCRIPT','APPTITUDE','CODING']
+        skill_list=['C++','JAVA','PYTHON','OOPS','HTML','CSS','JAVASCRIPT']
         for skill in skill_list:
             if request.form.get(skill):
                 skills=skills+skill+"||" 

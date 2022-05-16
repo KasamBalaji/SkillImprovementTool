@@ -2,12 +2,14 @@
 {% block page_content %}
  
 
-    <h1>Hey there please select which type of question you want to add</h1>
+    <h4>Questions to add</h4>
 
-    <a href="{{ url_for('addTasks.addingFillInTheBlanks') }}"> FILL IN THE BLANKS </a>
+    <a href="{{ url_for('addTasks.addingFillInTheBlanks') }}"> Fill in the Blanks Questions </a>
     <br>
-    <a href="{{ url_for('addTasks.addingMUltipleChoiceQuestion') }}"> Multiple Choice Qns </a>
+    <a href="{{ url_for('addTasks.addingMUltipleChoiceQuestion') }}"> Multiple Choice Questions </a>
     <br>
     <a href="{{ url_for('addTasks.addingCodingQuestion') }}">  Coding Type Questions </a>
+    <br>
+    <a href="{{ url_for('addTasks.addingEssay')}}">Essay Type Questions</a>
 
 {% endblock %}

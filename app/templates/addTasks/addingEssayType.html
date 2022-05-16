@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>
-	 Fill In The Blanks type Question
+	Adding Multiple Choice type Questions
 </title>
 
 
@@ -49,15 +49,16 @@
 
 {% block bodyblock %}
 
-<h1>Adding Fill In The Blanks type Questions</h1>
+<h1>Essay type Question</h1>
 
-
+<!-- Create Form -->
 <form id="form" method="post">
 
 	<div class="form-control">
 		<label>Select All the Skills required to solve the question
 			<small>(Check all that apply)</small>
-		</label> 
+		</label>
+		<!-- Input Type Checkbox -->
 		<label for="inp-1">
 			<input type="checkbox" name="C++">C++</input></label>
 		<label for="inp-2">
@@ -70,12 +71,6 @@
 			<input type="checkbox" name="HTML">HTML</input></label>
 		<label for="inp-6">
 			<input type="checkbox" name="CSS">CSS</input></label>
-		<label for="inp-7">
-			<input type="checkbox" name="JAVASCRIPT">JAVASCRIPT</input></label>
-		<label for="inp-9">
-			<input type="checkbox" name="APPTITUDE">APPTITUDE</input></label>
-		<label for="inp-10">
-			<input type="checkbox" name="CODING">CODING</input></label>
 	</div>
 
 	<div class="form-control">
@@ -83,8 +78,18 @@
 			Task Content*
 		</label>
 		<textarea name="content" id="content" placeholder="Enter Task content here" required></textarea>
-	</div> 
-	
+	</div>
+
+	<div class="form-control">
+		<label for="options">
+			Criteria*
+		</label>
+
+		<textarea name="criterias" id="criterias" placeholder="Enter criteria seperated by || like criteria a||criteria b|| ..."
+			required></textarea>
+	</div>
+
+
 	<div class="form-control">
 		<label for="relatedtags" id="label-name">
 			Related Tags*
@@ -95,12 +100,12 @@
 
 
 	<div class="form-control">
-		<label for="answer">
-			Answer*
+		<label for="weights">
+			Weights*
 		</label>
 
-		<input type="text" name="answer" id="answer"
-			placeholder="Enter answer seperated by || like option a||option b|| ..." required />
+		<input type="text" name="weights" id="weights"
+			placeholder="Enter weights seperated by || like weight 1||weight 2|| ..." required />
 	</div>
 
 
