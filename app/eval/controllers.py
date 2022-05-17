@@ -16,10 +16,10 @@ eval = Blueprint('eval',__name__)
 
 
 sqls ={
-    "OB_PF": "SELECT avg(quality) ,avg(time) ,avg(CAST(skill_gaps->>'{skill}' AS INTEGER)) FROM batches \
+    "OB_PF": "SELECT avg(quality) ,avg(time) ,avg(CAST(skill_gaps->>'{skill}' AS FLOAT)) FROM batches \
 WHERE batch_number= (SELECT batch_number FROM batches WHERE user_id={user_id} ORDER BY batch_number DESC LIMIT 1) \
 AND skill_gaps->>'{skill}' IS NOT NULL",
-"EXP_PF": "SELECT avg(quality), avg(time) FROM batches WHERE user_id={user_id} AND CAST(skill_gaps->>'{skill}' AS INTEGER) BETWEEN {lower} AND {upper}"
+"EXP_PF": "SELECT avg(quality), avg(time) FROM batches WHERE user_id={user_id} AND CAST(skill_gaps->>'{skill}' AS FLOAT) BETWEEN {lower} AND {upper}"
 }
 
 @eval.route('/db')
@@ -92,37 +92,46 @@ class Problem(View):
             pfs = {}
             for skill in skills:
                 obs_sql = sqls["OB_PF"].format(skill=skill,user_id=user_id)
+                print(obs_sql)
                 ob =db.engine.execute(obs_sql).fetchone()
                 if ob[2] is not None:
-                    exp_sql = sqls["EXP_PF"].format(skill=skill,user_id=user_id,lower=ob[2]-100,upper=ob[2]+100)
+                    exp_sql = sqls["EXP_PF"].format(skill=skill,user_id=user_id,lower=max(ob[2]-400,0),upper=ob[2]+400)
+                    print(exp_sql)
                     exp = db.engine.execute(exp_sql).fetchone()
+                    print(ob)
+                    print(exp)
                     d = math.sqrt((exp[0]-ob[0])**2 + (exp[1]-ob[1])**2)
                     s = math.erf(d)
                     pfs[skill]=s
             return pfs
 
         def get_task_ids(self,skills):
-            return [2],""
+            # return [2],""
             k=500
             userskill = UserSkill.query.filter_by(user_id=session["user_id"]).first()
             errors = []
 
             #Creating Queries for each skill
             queries = {}
+            print(skills)
+            print(userskill.skill_values)
+            
             for skill in skills:
-                if userskill.skill_values.get(skill) is None:
+                try:
+                    print(userskill.skill_values[skill])
+                except:
                     errors.append(skill)
                     continue
                 skillvalue = userskill.skill_values[skill]
-                queries[skill] = f"CAST(skill_values->>'{skill}' AS INTEGER) BETWEEN {skillvalue-k} AND {skillvalue+k}"
+                queries[skill] = f"CAST(skill_values->>'{skill}' AS FLOAT) BETWEEN {skillvalue-k} AND {skillvalue+k}"
             
-            if len(errors)>=0:
+            if len(errors)>0:
                 return -1, "No skills for "+str(errors)
             
             #Getting tasks for given skill in a range
             task_ids = []
             for length in range(1,len(skills)+1):
-                st = "SELECT * FROM task_skills WHERE "
+                st = "SELECT task_id FROM task_skills WHERE "
                 ed = f" length ={length}"
                 combos = list(itertools.combinations(skills,length))
                 for combo in combos:
@@ -133,9 +142,9 @@ class Problem(View):
                     res = db.engine.execute(sql).fetchall()
                     res =list(itertools.chain(*res))
                     task_ids.extend(res)
-            
+            print(task_ids)
             #Getting Performance Factors
-            Pfs = self.get_performance_factors(skills,session["user_id"])
+            pfs = self.get_performance_factors(skills,session["user_id"])
 
             #Getting Learning Potential
             skill_values={}
@@ -159,7 +168,8 @@ class Problem(View):
                 variance = sum([((x - mean) ** 2) for x in skillgaps[skill]]) / len(skillgaps[skill])
                 sd = variance ** 0.5
                 means[skill]=mean
-                sds[skill]=sd
+                sds[skill]=max(sd,0.0001)
+        
             learning_potentials = {}
             for task_id in task_values:
                 lp =0
@@ -353,6 +363,7 @@ def update_skill_batch(user_id,task_id,sub_id,quality,time,type):
 
     #Get Skill Gaps for Skill in taskskill
     skillgaps ={}
+    print(user_skill_values)
     for skill in task_skill_values:
         skillgaps[skill]=task_skill_values[skill]-user_skill_values[skill]
     
@@ -364,8 +375,11 @@ def update_skill_batch(user_id,task_id,sub_id,quality,time,type):
     db.session.commit()
 
     #Get Score using percentile
-    percentile=  db.engine.execute("SElECT percent_rank FROM  (SELECT time, PERCENT_RANK() OVER(order by time) FROM batches where task_id={}) pt where time={}".format(1,322)).fetchall()[0][0]
-    percentile = 1- percentile
+    try:
+        percentile=  db.engine.execute("SElECT percent_rank FROM  (SELECT time, PERCENT_RANK() OVER(order by time) FROM batches where task_id={}) pt where time={}".format(1,322)).fetchall()[0][0]
+        percentile = 1- percentile
+    except:
+        percentile=1
     score = quality*percentile
     #Update Skills
 
@@ -477,6 +491,8 @@ def submit():
                     os.remove("input.txt")
                     os.remove("output.txt")
                     os.remove("eoutput.txt")
+                cnt =passed
+                print(cnt)
                 flash(f"{cnt}/{len(inputs)} Testcases got solved")
                 if type=='test':    
                     results = {'result': f"{cnt}/{len(inputs)} Testcases got solved"}
